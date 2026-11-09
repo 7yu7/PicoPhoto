@@ -1,16 +1,12 @@
 #include <QApplication>
 #include <QWidget>
 
+#include "MainWindow.h"
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
-    QWidget window;
+    MainWindow window;
 
-    window.setWindowTitle("PicoPhoto");
-    window.resize(800, 600);
-
-    window.show();
-    
     return app.exec();
 }

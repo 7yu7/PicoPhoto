@@ -9,8 +9,10 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets)
 
 qt_standard_project_setup()
 
-qt_add_executable(my_editor
+qt_add_executable(PicoPhoto
     src/main.cpp
+    src/MainWindow.h
+    src/MainWindow.cpp
 )
 
-target_link_libraries(my_editor PRIVATE Qt6::Widgets)
+target_link_libraries(PicoPhoto PRIVATE Qt6::Widgets)
