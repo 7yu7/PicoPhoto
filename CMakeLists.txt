@@ -13,6 +13,10 @@ qt_add_executable(PicoPhoto
     src/main.cpp
     src/MainWindow.h
     src/MainWindow.cpp
+    src/CanvasWidget.h
+    src/CanvasWidget.cpp
+    src/Document.h
+    src/Document.cpp
 )
 
 target_link_libraries(PicoPhoto PRIVATE Qt6::Widgets)
