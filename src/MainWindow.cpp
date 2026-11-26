@@ -9,4 +9,5 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     CanvasWidget* canvas = new CanvasWidget(this);
     setCentralWidget(canvas);
     show();
+    canvas->centerView();
 }
