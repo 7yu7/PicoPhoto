@@ -4,12 +4,11 @@
 #include <QMouseEvent>
 
 
-CanvasWidget::CanvasWidget(QWidget *parent) : QWidget(parent) {
+CanvasWidget::CanvasWidget(QWidget *parent, Document* document, Brush* brush) : QWidget(parent), document(document), brush(brush) {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
     setCursor(Qt::CrossCursor);
     setMinimumSize(100, 100);
-    document = new Document();
     rebuildBrushOutline();
 }
 
@@ -40,7 +39,7 @@ void CanvasWidget::centerView() {
 }
 
 QPointF CanvasWidget::screenToDocument(const QPointF &screenPos) const {
-    double offset = (brushSettings.size % 2 == 0) ? 0 : 0.5;
+    double offset = (brush->size % 2 == 0) ? 0 : 0.5;
     return QPointF(std::floor((screenPos.x() - x_pos) / scale) + offset,
                    std::floor((screenPos.y() - y_pos) / scale) + offset);
 }
@@ -104,8 +103,8 @@ void CanvasWidget::zoom(double value) {
 
 void CanvasWidget::drawStroke(const QPointF &from, const QPointF &to) {
     QPainter painter(&document->image);
-    painter.setRenderHint(QPainter::Antialiasing, brushSettings.antialiased);
-    painter.setPen(QPen(brushSettings.color, brushSettings.size,
+    painter.setRenderHint(QPainter::Antialiasing, brush->antialiased);
+    painter.setPen(QPen(brush->color, brush->size,
                         Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
     if (from == to) {
@@ -118,7 +117,7 @@ void CanvasWidget::drawStroke(const QPointF &from, const QPointF &to) {
 void CanvasWidget::rebuildBrushOutline() {
     brushOutline.clear();
 
-    const int dim = brushSettings.size;
+    const int dim = brush->size;
     const int half = dim / 2;
     const double center = (dim - 1) / 2.0;
 
@@ -141,4 +140,6 @@ void CanvasWidget::rebuildBrushOutline() {
             if (!isFilled(x + 1, y)) brushOutline.append(QLineF(px + 1, py, px + 1, py + 1));
         }
     }
+
+    update();
 }

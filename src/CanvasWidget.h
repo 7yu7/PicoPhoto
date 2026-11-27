@@ -3,17 +3,18 @@
 #include <QWidget>
 
 #include "Document.h"
-#include "BrushSettings.h"
+#include "Brush.h"
 
 class CanvasWidget : public QWidget {
     Q_OBJECT
 
     public:
-        CanvasWidget(QWidget *parent = nullptr);
+        CanvasWidget(QWidget *parent, Document* document, Brush* brush);
         void centerView();
+        void rebuildBrushOutline();
         
         Document* document;
-        BrushSettings brushSettings;
+        Brush* brush;
 
     protected:
         void paintEvent(QPaintEvent *event) override;
@@ -27,7 +28,6 @@ class CanvasWidget : public QWidget {
         void zoom(double value);
         QPointF screenToDocument(const QPointF &screenPos) const;
         void drawStroke(const QPointF &from, const QPointF &to);
-        void rebuildBrushOutline();
 
         int x_pos = 0;
         int y_pos = 0;
