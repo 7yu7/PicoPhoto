@@ -17,6 +17,7 @@ qt_add_executable(PicoPhoto
     src/CanvasWidget.cpp
     src/Document.h
     src/Document.cpp
+    src/BrushSettings.h
 )
 
 target_link_libraries(PicoPhoto PRIVATE Qt6::Widgets)

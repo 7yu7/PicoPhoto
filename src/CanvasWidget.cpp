@@ -7,6 +7,7 @@
 CanvasWidget::CanvasWidget(QWidget *parent) : QWidget(parent) {
     setMouseTracking(true);
     setFocusPolicy(Qt::StrongFocus);
+    setCursor(Qt::CrossCursor);
     setMinimumSize(100, 100);
     document = new Document();
 }
@@ -26,15 +27,28 @@ void CanvasWidget::centerView() {
     y_pos = height() / 2 - scale * document->image.height() / 2;
 }
 
-void CanvasWidget::mouseMoveEvent(QMouseEvent *event) {
-    QPoint new_mouse_pos = event->pos();
+QPointF CanvasWidget::screenToDocument(const QPointF &screenPos) const {
+    return QPointF((int)((screenPos.x() - x_pos) / scale) + 0.5,
+                   (int)((screenPos.y() - y_pos) / scale) + 0.5);
+}
 
+void CanvasWidget::mouseMoveEvent(QMouseEvent *event) {
+    QPointF new_mouse_pos = event->position();
     if (event->buttons() & Qt::MiddleButton) {
         x_pos += new_mouse_pos.x() - mouse_pos.x();
         y_pos += new_mouse_pos.y() - mouse_pos.y();
+    } else if (event->buttons() & Qt::LeftButton) {
+        drawStroke(screenToDocument(mouse_pos), screenToDocument(new_mouse_pos));
     }
 
     mouse_pos = new_mouse_pos;
+    update();
+}
+
+void CanvasWidget::mousePressEvent(QMouseEvent *event) {
+    if (event->buttons() & Qt::LeftButton) {
+        drawStroke(screenToDocument(mouse_pos), screenToDocument(mouse_pos));
+    }
     update();
 }
 
@@ -69,4 +83,17 @@ void CanvasWidget::zoom(double value) {
     y_pos = mouse_pos.y() - (mouse_pos.y() - y_pos) * (scale / old_scale);
 
     update();
+}
+
+void CanvasWidget::drawStroke(const QPointF &from, const QPointF &to) {
+    QPainter painter(&document->image);
+    painter.setRenderHint(QPainter::Antialiasing, brushSettings.antialiased);
+    painter.setPen(QPen(brushSettings.color, brushSettings.size,
+                        Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+
+    if (from == to) {
+        painter.drawPoint(from);
+    } else {
+        painter.drawLine(from, to);
+    }
 }
