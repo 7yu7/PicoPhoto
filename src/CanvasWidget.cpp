@@ -10,6 +10,7 @@ CanvasWidget::CanvasWidget(QWidget *parent) : QWidget(parent) {
     setCursor(Qt::CrossCursor);
     setMinimumSize(100, 100);
     document = new Document();
+    rebuildBrushOutline();
 }
 
 void CanvasWidget::paintEvent(QPaintEvent *event) {
@@ -19,6 +20,17 @@ void CanvasWidget::paintEvent(QPaintEvent *event) {
     painter.translate(x_pos, y_pos);
     painter.scale(scale, scale);
     painter.drawImage(0, 0, document->image);
+
+    if (underMouse()) {
+        QPen previewPen(Qt::white, 0);
+        previewPen.setCosmetic(true);
+        painter.setPen(previewPen);
+        painter.setCompositionMode(QPainter::CompositionMode_Difference);
+        painter.setRenderHint(QPainter::Antialiasing, false);
+
+        painter.translate(std::floor((mouse_pos.x() - x_pos) / scale), std::floor((mouse_pos.y() - y_pos) / scale));
+        painter.drawLines(brushOutline);
+    }
 }
 
 void CanvasWidget::centerView() {
@@ -28,8 +40,9 @@ void CanvasWidget::centerView() {
 }
 
 QPointF CanvasWidget::screenToDocument(const QPointF &screenPos) const {
-    return QPointF((int)((screenPos.x() - x_pos) / scale) + 0.5,
-                   (int)((screenPos.y() - y_pos) / scale) + 0.5);
+    double offset = (brushSettings.size % 2 == 0) ? 0 : 0.5;
+    return QPointF(std::floor((screenPos.x() - x_pos) / scale) + offset,
+                   std::floor((screenPos.y() - y_pos) / scale) + offset);
 }
 
 void CanvasWidget::mouseMoveEvent(QMouseEvent *event) {
@@ -49,6 +62,10 @@ void CanvasWidget::mousePressEvent(QMouseEvent *event) {
     if (event->buttons() & Qt::LeftButton) {
         drawStroke(screenToDocument(mouse_pos), screenToDocument(mouse_pos));
     }
+    update();
+}
+
+void CanvasWidget::leaveEvent(QEvent *event) {
     update();
 }
 
@@ -95,5 +112,33 @@ void CanvasWidget::drawStroke(const QPointF &from, const QPointF &to) {
         painter.drawPoint(from);
     } else {
         painter.drawLine(from, to);
+    }
+}
+
+void CanvasWidget::rebuildBrushOutline() {
+    brushOutline.clear();
+
+    const int dim = brushSettings.size;
+    const int half = dim / 2;
+    const double center = (dim - 1) / 2.0;
+
+    auto isFilled = [&](int x, int y) {
+        double dx = x - center;
+        double dy = y - center;
+        return dx * dx + dy * dy < (dim / 2.0) * (dim / 2.0);
+    };
+
+    for (int y = 0; y < dim; y++) {
+        for (int x = 0; x < dim; x++) {
+            if (!isFilled(x, y)) continue;
+
+            int px = x - half;
+            int py = y - half;
+
+            if (!isFilled(x, y - 1)) brushOutline.append(QLineF(px, py, px + 1, py));
+            if (!isFilled(x, y + 1)) brushOutline.append(QLineF(px, py + 1, px + 1, py + 1));
+            if (!isFilled(x - 1, y)) brushOutline.append(QLineF(px, py, px, py + 1));
+            if (!isFilled(x + 1, y)) brushOutline.append(QLineF(px + 1, py, px + 1, py + 1));
+        }
     }
 }
